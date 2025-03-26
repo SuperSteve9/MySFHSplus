@@ -1,4 +1,4 @@
-console.log('%cGet out of here and focus in class! ', 'background: #222; color: #FF0000');
+console.log('%cGet out of here and focus in class! ', 'color: #FF0000');
 
 (function () {
   let observer;
@@ -6,10 +6,15 @@ console.log('%cGet out of here and focus in class! ', 'background: #222; color: 
   let weightedElems = [];
   let baseTile;
   let gpas = [];
+  let grades = [];
+  let classes = [];
 
   function main() {
+    const top = document.querySelector('.pri-100-bgc');
+    top.style.setProperty('background-color', '#000070', 'important');
     gradeElems.length = 0;
     weightedElems.length = 0;
+    classes.length = 0;
     document.querySelectorAll('#app #coursesContainer .row').forEach(row => {
       let gradeElem = row.querySelector('.col-md-2 h3.showGrade');
       if (gradeElems.indexOf(gradeElem) === -1) {
@@ -19,6 +24,8 @@ console.log('%cGet out of here and focus in class! ', 'background: #222; color: 
       if (weightedElems.indexOf(weightedElem) === -1) {
         weightedElems.push(weightedElem);
       }
+      let classElem = row.querySelector('.col-md-3 a h3');
+      classes.push(classElem.textContent);
     });
 
     if (gradeElems.length === 9) {
@@ -29,9 +36,9 @@ console.log('%cGet out of here and focus in class! ', 'background: #222; color: 
   }
 
   function afterObserverCallback() {
-    appendGrades(gradeElems, gpas, weightedElems);
+    appendGrades(gradeElems, gpas, weightedElems, grades);
     createGPATile(baseTile, gpas);
-    createChangeTile(baseTile);
+    createChangeTile(baseTile, grades, classes);
   }
 
   function observeElement(selector) {
@@ -87,11 +94,12 @@ console.log('%cGet out of here and focus in class! ', 'background: #222; color: 
 /* <------------------- ACTION METHODDS ----------------> */
 
 // append grade letters to each grade
-function appendGrades(gradeElems, gpas, weightedElems) {
+function appendGrades(gradeElems, gpas, weightedElems, grades) {
   for (let i = 0; i < gradeElems.length; i++) {
     let elem = gradeElems[i];
     let weightedElem = weightedElems[i];
     let grade = parseFloat(elem.textContent);
+    grades.push(grade);
     if (!isNaN(grade)) {
       elem.textContent += (`(${getGradeLetter(grade)})`);
       let classID = weightedElem.getAttribute('href');
@@ -137,7 +145,9 @@ function createGPATile(baseTile, gpas) {
 
 
 // Create the Grade Change tile block
-function createChangeTile(baseTile) {
+function createChangeTile(baseTile, grades, classes) {
+  const savedGrades = JSON.parse(localStorage.getItem('grades'));
+  localStorage.setItem('grades', JSON.stringify(grades));
   let GCTile = baseTile.cloneNode(true);
   GCTile.id = 'GradeChange';
 
@@ -152,6 +162,32 @@ function createChangeTile(baseTile) {
 
   let GCContainer = GCTile.querySelector('.col-md-12');
   GCContainer.innerHTML = '';
+
+  let gradeChangeTexts = [];
+
+  for (i = 0; i < savedGrades.length; i++) {
+    if (grades[i] > savedGrades[i]) {
+      gradeChangeTexts.push(`<span style="color: green;">${classes[i]}: ${savedGrades[i]} ↑ ${grades[i]}</span>`);
+    } else if (grades[i] < savedGrades[i]) {
+      gradeChangeTexts.push(`<span style="color: red;">${classes[i]}: ${savedGrades[i]} ↓ ${grades[i]}</span>`);
+    } else {
+      gradeChangeTexts.push(0);
+    }
+  }
+
+  if (gradeChangeTexts.every(text => text === 0)) {
+    let gradeElem = document.createElement('h5');
+    gradeElem.textContent = "No grade changes.";
+    GCContainer.appendChild(gradeElem);
+  } else {
+    for (const text of gradeChangeTexts) {
+      if (text != 0) {
+        let gradeElem = document.createElement('h5');
+        gradeElem.innerHTML = text;
+        GCContainer.appendChild(gradeElem);
+      }
+    }
+  }
 
   let dataAtt = GCTile.querySelector('.bb-tile-title');
   dataAtt.setAttribute('data-target', '#GCCollapse');
@@ -235,4 +271,9 @@ function calcGPAAvg(gpas) {
 
   console.log(sum);
   return sum;
+}
+
+
+function calcMaxGPA(grade, weighted) {
+
 }
