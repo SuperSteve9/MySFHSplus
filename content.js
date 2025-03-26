@@ -272,8 +272,3 @@ function calcGPAAvg(gpas) {
   console.log(sum);
   return sum;
 }
-
-
-function calcMaxGPA(grade, weighted) {
-
-}
