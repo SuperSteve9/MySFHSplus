@@ -15,6 +15,7 @@ curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/g
 curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/manifest.json" --output manifest.json
 curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/popup.html" --output popup.html
 curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/game.html" --output game.html
+curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/cubetexture.png" --output cubetexture.png
 
 if not exist icons (
   mkdir icons
