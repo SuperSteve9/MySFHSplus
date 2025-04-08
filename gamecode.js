@@ -2,8 +2,15 @@ import { initBuffers } from "./init-buffers.js";
 import { drawScene } from "./draw-scene.js";
 
 const playerPos = [0, -3, 0];
+const playerRot = [0, 0, 0];
+const playerMovSpeed = 0.1;
+const playerRotSpeed = 0.03;
 const keysPressed = {};
-let deltaTime = 0;
+const canvas = document.querySelector("#glcanvas");
+let lastFrameTime = performance.now();
+let frameCount = 0;
+let fps = 0;
+let lastFpsUpdate = performance.now();
 
 window.addEventListener("keydown", (event) => {
   keysPressed[event.key] = true;
@@ -13,21 +20,31 @@ window.addEventListener("keyup", (event) => {
   keysPressed[event.key] = false;
 });
 
+canvas.addEventListener("click", () => {
+  console.log("canvas clicked!");
+  canvas.requestPointerLock();
+});
+
+canvas.addEventListener("mousemove", (event) => {
+  const rect = canvas.getBoundingClientRect();                    // Get canvas position on the page
+  const x = event.clientX - rect.left;         // Mouse X within canvas
+  const y = event.clientY - rect.top;          // Mouse Y within canvas
+  console.log(`Mouse position: (${x}, ${y})`);
+});
+
+
+
+
 main();
 
 //
 // start here
 //
 function main() {
-  const canvas = document.querySelector("#glcanvas");
-  // Initialize the GL context
   const gl = canvas.getContext("webgl");
-
-  // Only continue if WebGL is available and working
+  
   if (gl === null) {
-    alert(
-      "Unable to initialize WebGL. Your browser or machine may not support it."
-    );
+    alert("Unable to initialize WebGL. Your browser or machine may not support it.");
     return;
   }
 
@@ -99,41 +116,59 @@ function main() {
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
   let then = 0;
-
-  // Draw the scene repeatedly
-  function render(now) {
-    now *= 0.001; // convert to seconds
-    deltaTime = now - then;
-    then = now;
-
-    const cubePositions = [];
-
-    let world_x = 16;
-    let world_z = 16;
-
-    for (let i = 0; i > world_x * -1; i--) {
-      for (let j = 0; j < world_z; j++) {
-        cubePositions.push([j*2, 0.0, i*2]);
-      }
-    }
-
-    if (keysPressed["w"]) {
-      playerPos[2] += 0.1;
-    }
-    if (keysPressed["s"]) {
-      playerPos[2] -= 0.1;
-    }
-    if (keysPressed["a"]) {
-      playerPos[0] += 0.1;
-    }
-    if (keysPressed["d"]) {
-      playerPos[0] -= 0.1;
-    }
   
 
-    drawScene(gl, programInfo, buffers, texture, cubePositions, playerPos);
-    
-
+  function render() {
+    const now = performance.now();
+    const delta = now - lastFrameTime;
+    lastFrameTime = now;
+  
+    // Update FPS every second
+    frameCount++;
+    if (now - lastFpsUpdate >= 1000) {
+      fps = frameCount;
+      frameCount = 0;
+      lastFpsUpdate = now;
+      console.log(`FPS: ${fps}`);
+    }
+  
+    const cubePositions = [];
+    let world_x = 16;
+    let world_z = 16;
+  
+    for (let i = 0; i > world_x * -1; i--) {
+      for (let j = 0; j < world_z; j++) {
+        cubePositions.push([j * 2, 0.0, i * 2]);
+      }
+    }
+  
+    if (keysPressed["w"]) {
+      playerPos[2] += playerMovSpeed;
+    }
+    if (keysPressed["s"]) {
+      playerPos[2] -= playerMovSpeed;
+    }
+    if (keysPressed["a"]) {
+      playerPos[0] += playerMovSpeed;
+    }
+    if (keysPressed["d"]) {
+      playerPos[0] -= playerMovSpeed;
+    }
+    if (keysPressed["ArrowRight"]) {
+      playerRot[0] += playerRotSpeed;
+    }
+    if (keysPressed["ArrowLeft"]) {
+      playerRot[0] -= playerRotSpeed;
+    }
+    if (keysPressed["ArrowUp"]) {
+      playerRot[1] -= playerRotSpeed;
+    }
+    if (keysPressed["ArrowDown"]) {
+      playerRot[1] += playerRotSpeed;
+    }
+  
+    drawScene(gl, programInfo, buffers, texture, cubePositions, playerPos, playerRot);
+  
     requestAnimationFrame(render);
   }
   requestAnimationFrame(render);

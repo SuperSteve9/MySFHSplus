@@ -1,4 +1,4 @@
-function drawScene(gl, programInfo, buffers, texture, cubePositions, playerPos) {
+function drawScene(gl, programInfo, buffers, texture, cubePositions, playerPos, playerRot) {
   // Set clear color, depth, and enable depth testing.
   gl.clearColor(0.4, 0.7, 0.8, 1.0);
   gl.clearDepth(1.0);
@@ -49,11 +49,13 @@ function drawScene(gl, programInfo, buffers, texture, cubePositions, playerPos) 
     const renderPosition = vec3.create();
     vec3.add(renderPosition, position, playerPos);
 
+    mat4.rotate(modelViewMatrix, modelViewMatrix, playerRot[1], [1, 0, 0]);
+    mat4.rotate(modelViewMatrix, modelViewMatrix, playerRot[0], [0, 1, 0]);
     // Translate to the cube's position. Each 'position' is an [x, y, z] array.
     mat4.translate(modelViewMatrix, modelViewMatrix, renderPosition);
 
     // Optionally: You could apply a common rotation here if needed.
-    // e.g., mat4.rotate(modelViewMatrix, modelViewMatrix, commonRotation, [0, 1, 0]);
+
 
     // Set the model-view matrix uniform.
     gl.uniformMatrix4fv(
@@ -62,6 +64,7 @@ function drawScene(gl, programInfo, buffers, texture, cubePositions, playerPos) 
       modelViewMatrix
     );
 
+    gl.cullFace(gl.BACK);
     // Draw the cube.
     gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
   });
