@@ -10,6 +10,12 @@ console.log('%cGet out of here and focus in class! ', 'color: #FF0000');
   let classes = [];
 
   function main() {
+    changeColorTopBar(localStorage.getItem('topCol'));
+    changeColorMiddleBar(localStorage.getItem('midCol'));
+    changeColorLowerBar(localStorage.getItem('lowCol'));
+    changeColorBody(localStorage.getItem('bodyCol'));
+    changeColorTileTitle(localStorage.getItem('tileTitleCol'));
+    changeColorTilebg(localStorage.getItem('tileBGCol'));
     gradeElems.length = 0;
     weightedElems.length = 0;
     classes.length = 0;
@@ -157,7 +163,7 @@ function createStyleTile(baseTile) {
 
   let topBar = document.createElement('input');
   topBar.type = 'color';
-  topBar.value = '#004a97';
+  topBar.value = localStorage.getItem('topCol');
   styleContainer.appendChild(topBar);
 
 
@@ -167,7 +173,7 @@ function createStyleTile(baseTile) {
 
   let middleBar = document.createElement('input');
   middleBar.type = 'color';
-  middleBar.value = '#e8f3fc';
+  middleBar.value = localStorage.getItem('midCol');
   styleContainer.appendChild(middleBar);
 
 
@@ -177,7 +183,7 @@ function createStyleTile(baseTile) {
   
   let lowerBar = document.createElement('input');
   lowerBar.type = 'color';
-  lowerBar.value = '#e8f3fc';
+  lowerBar.value = localStorage.getItem('lowCol');
   styleContainer.appendChild(lowerBar);
 
 
@@ -187,7 +193,7 @@ function createStyleTile(baseTile) {
 
   let body = document.createElement('input');
   body.type = 'color';
-  body.value = '#eeeeef';
+  body.value = localStorage.getItem('bodyCol');
   styleContainer.appendChild(body);
 
 
@@ -197,7 +203,7 @@ function createStyleTile(baseTile) {
 
   let tileTitle = document.createElement('input');
   tileTitle.type = 'color';
-  tileTitle.value = '#ffffff';
+  tileTitle.value = localStorage.getItem('tileTitleCol');
   styleContainer.appendChild(tileTitle);
 
 
@@ -207,13 +213,18 @@ function createStyleTile(baseTile) {
 
   let tileBG = document.createElement('input');
   tileBG.type = 'color';
-  tileBG.value = '#ffffff';
+  tileBG.value = localStorage.getItem('tileBGCol');
   styleContainer.appendChild(tileBG);
 
 
   tileBG.addEventListener('input', (event) => {
     changeColorTilebg(event.target.value);
   });
+
+  let resetButton = document.createElement('button');
+  resetButton.textContent = "Reset Colors";
+  resetButton.onclick = resetColors;
+  styleContainer.appendChild(resetButton);
 
 
   let dataAtt = styleTile.querySelector('.bb-tile-title');
@@ -285,21 +296,25 @@ function createChangeTile(baseTile, grades, classes) {
 function changeColorTopBar(color) {
   const top = document.querySelector('.pri-100-bgc');
   top.style.setProperty('background-color', color, 'important');
+  localStorage.setItem('topCol', color);
 }
 
 function changeColorMiddleBar(color) {
   const top = document.querySelector('.sec-15-bgc');
   top.style.setProperty('background-color', color, 'important');
+  localStorage.setItem('midCol', color);
 }
 
 function changeColorLowerBar(color) {
   const top = document.querySelector('.subnavbar');
   top.style.setProperty('background-color', color, 'important');
+  localStorage.setItem('lowCol', color);
 }
 
 function changeColorBody(color) {
   const top = document.querySelector('body');
   top.style.setProperty('background-color', color, 'important');
+  localStorage.setItem('bodyCol', color);
 }
 
 function changeColorTileTitle(color) {
@@ -307,6 +322,7 @@ function changeColorTileTitle(color) {
   top.forEach(el => {
     el.style.setProperty('background-color', color, 'important');
   })
+  localStorage.setItem('tileTitleCol', color);
 }
 
 function changeColorTilebg(color) {
@@ -314,6 +330,16 @@ function changeColorTilebg(color) {
   top.forEach(el => {
     el.style.setProperty('background-color', color, 'important');
   })
+  localStorage.setItem('tileBGCol', color);
+}
+
+function resetColors() {
+  changeColorTopBar('#004a97');
+  changeColorMiddleBar('#e8f3fc');
+  changeColorLowerBar('#e8f3fc');
+  changeColorBody('#eeeeef');
+  changeColorTileTitle('#ffffff');
+  changeColorTilebg('#ffffff');
 }
 /* <----------------- HELPER FUNCTIONS -----------------> */
 
