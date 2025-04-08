@@ -10,8 +10,6 @@ console.log('%cGet out of here and focus in class! ', 'color: #FF0000');
   let classes = [];
 
   function main() {
-    const top = document.querySelector('.pri-100-bgc');
-    top.style.setProperty('background-color', '#000070', 'important');
     gradeElems.length = 0;
     weightedElems.length = 0;
     classes.length = 0;
@@ -39,6 +37,7 @@ console.log('%cGet out of here and focus in class! ', 'color: #FF0000');
     appendGrades(gradeElems, gpas, weightedElems, grades);
     createGPATile(baseTile, gpas);
     createChangeTile(baseTile, grades, classes);
+    createStyleTile(baseTile);
   }
 
   function observeElement(selector) {
@@ -83,7 +82,7 @@ console.log('%cGet out of here and focus in class! ', 'color: #FF0000');
   })(window.history);
 
   window.addEventListener('locationchange', function () {
-    console.log("URL changed. Restarting element observer...");
+    console.log("URL change detected");
     observeElement('#app');
   });
 
@@ -143,6 +142,89 @@ function createGPATile(baseTile, gpas) {
   baseTile.parentNode.appendChild(GPATile);
 }
 
+function createStyleTile(baseTile) {
+  let styleTile = baseTile.cloneNode(true);
+  styleTile.id = 'style';
+
+  let title = styleTile.querySelector('h2.bb-tile-header');
+  title.textContent = 'Colors';
+
+  $(styleTile).find(".col-md-12 div a h1").remove();
+  $(styleTile).find(".muted").remove();
+
+  let styleContainer = styleTile.querySelector('.col-md-12');
+  styleContainer.innerHTML = '';
+
+  let topBar = document.createElement('input');
+  topBar.type = 'color';
+  topBar.value = '#004a97';
+  styleContainer.appendChild(topBar);
+
+
+  topBar.addEventListener('input', (event) => {
+    changeColorTopBar(event.target.value);
+  });
+
+  let middleBar = document.createElement('input');
+  middleBar.type = 'color';
+  middleBar.value = '#e8f3fc';
+  styleContainer.appendChild(middleBar);
+
+
+  middleBar.addEventListener('input', (event) => {
+    changeColorMiddleBar(event.target.value);
+  });
+  
+  let lowerBar = document.createElement('input');
+  lowerBar.type = 'color';
+  lowerBar.value = '#e8f3fc';
+  styleContainer.appendChild(lowerBar);
+
+
+  lowerBar.addEventListener('input', (event) => {
+    changeColorLowerBar(event.target.value);
+  });
+
+  let body = document.createElement('input');
+  body.type = 'color';
+  body.value = '#eeeeef';
+  styleContainer.appendChild(body);
+
+
+  body.addEventListener('input', (event) => {
+    changeColorBody(event.target.value);
+  });
+
+  let tileTitle = document.createElement('input');
+  tileTitle.type = 'color';
+  tileTitle.value = '#ffffff';
+  styleContainer.appendChild(tileTitle);
+
+
+  tileTitle.addEventListener('input', (event) => {
+    changeColorTileTitle(event.target.value);
+  });
+
+  let tileBG = document.createElement('input');
+  tileBG.type = 'color';
+  tileBG.value = '#ffffff';
+  styleContainer.appendChild(tileBG);
+
+
+  tileBG.addEventListener('input', (event) => {
+    changeColorTilebg(event.target.value);
+  });
+
+
+  let dataAtt = styleTile.querySelector('.bb-tile-title');
+  dataAtt.setAttribute('data-target', '#styleCollapse');
+
+  let seperAtt = styleTile.querySelector('#conductCollapse');
+  seperAtt.setAttribute('id', 'styleCollapse');
+
+  baseTile.parentNode.appendChild(styleTile);
+}
+
 
 // Create the Grade Change tile block
 function createChangeTile(baseTile, grades, classes) {
@@ -198,6 +280,41 @@ function createChangeTile(baseTile, grades, classes) {
   baseTile.parentNode.appendChild(GCTile);
 }
 
+/* extremly unoptimized color changer WILL FIX LATER PLEASE*/
+
+function changeColorTopBar(color) {
+  const top = document.querySelector('.pri-100-bgc');
+  top.style.setProperty('background-color', color, 'important');
+}
+
+function changeColorMiddleBar(color) {
+  const top = document.querySelector('.sec-15-bgc');
+  top.style.setProperty('background-color', color, 'important');
+}
+
+function changeColorLowerBar(color) {
+  const top = document.querySelector('.subnavbar');
+  top.style.setProperty('background-color', color, 'important');
+}
+
+function changeColorBody(color) {
+  const top = document.querySelector('body');
+  top.style.setProperty('background-color', color, 'important');
+}
+
+function changeColorTileTitle(color) {
+  const top = document.querySelectorAll('.bb-tile .bb-tile-title');
+  top.forEach(el => {
+    el.style.setProperty('background-color', color, 'important');
+  })
+}
+
+function changeColorTilebg(color) {
+  const top = document.querySelectorAll('.bb-tile-content');
+  top.forEach(el => {
+    el.style.setProperty('background-color', color, 'important');
+  })
+}
 /* <----------------- HELPER FUNCTIONS -----------------> */
 
 // convert grade number to grade letter
@@ -255,6 +372,7 @@ function calcGPA(grade, Weighted) {
   if (Weighted) {
     gpa += 1;
   }
+  console.log(gpa);
 
   return gpa;
 }
