@@ -1,8 +1,17 @@
 import { initBuffers } from "./init-buffers.js";
 import { drawScene } from "./draw-scene.js";
 
-let cubeRotation = 0.0;
+const playerPos = [0, -3, 0];
+const keysPressed = {};
 let deltaTime = 0;
+
+window.addEventListener("keydown", (event) => {
+  keysPressed[event.key] = true;
+});
+
+window.addEventListener("keyup", (event) => {
+  keysPressed[event.key] = false;
+});
 
 main();
 
@@ -97,8 +106,33 @@ function main() {
     deltaTime = now - then;
     then = now;
 
-    drawScene(gl, programInfo, buffers, texture, cubeRotation);
-    cubeRotation += deltaTime;
+    const cubePositions = [];
+
+    let world_x = 16;
+    let world_z = 16;
+
+    for (let i = 0; i > world_x * -1; i--) {
+      for (let j = 0; j < world_z; j++) {
+        cubePositions.push([j*2, 0.0, i*2]);
+      }
+    }
+
+    if (keysPressed["w"]) {
+      playerPos[2] += 0.1;
+    }
+    if (keysPressed["s"]) {
+      playerPos[2] -= 0.1;
+    }
+    if (keysPressed["a"]) {
+      playerPos[0] += 0.1;
+    }
+    if (keysPressed["d"]) {
+      playerPos[0] -= 0.1;
+    }
+  
+
+    drawScene(gl, programInfo, buffers, texture, cubePositions, playerPos);
+    
 
     requestAnimationFrame(render);
   }
