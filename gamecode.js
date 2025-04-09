@@ -1,7 +1,8 @@
 import { initBuffers } from "./init-buffers.js";
 import { drawScene } from "./draw-scene.js";
 
-const playerPos = [0, -3, 0];
+const playerPos = [0, 4, 0];
+playerPos[1] *= -1;
 const playerRot = [0, 0, 0];
 const playerMovSpeed = 0.1;
 const playerRotSpeed = 0.03;
@@ -15,6 +16,10 @@ let lastFpsUpdate = performance.now();
 window.addEventListener("keydown", (event) => {
   keysPressed[event.key] = true;
 });
+
+window.addEventListener("keypress", (event) => {
+  keysPressed[event.key] = true;
+}); 
 
 window.addEventListener("keyup", (event) => {
   keysPressed[event.key] = false;
@@ -33,7 +38,15 @@ canvas.addEventListener("mousemove", (event) => {
 });
 
 
-
+function generateChunk(x, y, cubePositions) {
+  for (let i = 0; i > 16 * -1; i--) {
+    for (let j = 0; j < 16; j++) {
+      for (let k = 0; k > -2; k-=2) {
+        cubePositions.push([(j * 2) + x * 16, k, (i * 2) + y * 16]);
+      }
+    }
+  }
+}
 
 main();
 
@@ -133,14 +146,13 @@ function main() {
     }
   
     const cubePositions = [];
-    let world_x = 16;
-    let world_z = 16;
-  
-    for (let i = 0; i > world_x * -1; i--) {
-      for (let j = 0; j < world_z; j++) {
-        cubePositions.push([j * 2, 0.0, i * 2]);
+
+    for (let i = -4; i < 4; i++) {
+      for (let j = -4; j < 4; j++) {
+        generateChunk(i, j, cubePositions);
       }
     }
+
   
     if (keysPressed["w"]) {
       playerPos[2] += Math.cos(playerRot[0]) * playerMovSpeed;
@@ -169,6 +181,17 @@ function main() {
     }
     if (keysPressed["ArrowDown"]) {
       playerRot[1] += playerRotSpeed;
+    }
+    if (keysPressed["r"]) {
+      playerPos[0] = -16 + Math.random() * 32;
+      playerPos[2] = -16 + Math.random() * 32;
+    }
+
+    if (keysPressed[" "]) {
+      playerPos[1] -= playerMovSpeed;
+    }
+    if (keysPressed["Shift"]) {
+      playerPos[1] += playerMovSpeed;
     }
     console.log(playerRot);
     if (playerRot[0] > Math.PI * 2) {

@@ -12,7 +12,7 @@ function drawScene(gl, programInfo, buffers, texture, cubePositions, playerPos, 
   const fieldOfView = (45 * Math.PI) / 180;
   const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
   const zNear = 0.1;
-  const zFar = 100.0;
+  const zFar = 256.0;
   const projectionMatrix = mat4.create();
   mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
 
@@ -64,7 +64,7 @@ function drawScene(gl, programInfo, buffers, texture, cubePositions, playerPos, 
       modelViewMatrix
     );
 
-    gl.cullFace(gl.BACK);
+    gl.cullFace(gl.FRONT_AND_BACK);
     // Draw the cube.
     gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
   });
