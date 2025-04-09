@@ -143,16 +143,20 @@ function main() {
     }
   
     if (keysPressed["w"]) {
-      playerPos[2] += playerMovSpeed;
+      playerPos[2] += Math.cos(playerRot[0]) * playerMovSpeed;
+      playerPos[0] -= Math.sin(playerRot[0]) * playerMovSpeed;
     }
     if (keysPressed["s"]) {
-      playerPos[2] -= playerMovSpeed;
+      playerPos[2] -= Math.cos(playerRot[0]) * playerMovSpeed;
+      playerPos[0] += Math.sin(playerRot[0]) * playerMovSpeed;
     }
     if (keysPressed["a"]) {
-      playerPos[0] += playerMovSpeed;
+      playerPos[2] += Math.sin(playerRot[0]) * playerMovSpeed;
+      playerPos[0] += Math.cos(playerRot[0]) * playerMovSpeed;
     }
     if (keysPressed["d"]) {
-      playerPos[0] -= playerMovSpeed;
+      playerPos[2] -= Math.sin(playerRot[0]) * playerMovSpeed;
+      playerPos[0] -= Math.cos(playerRot[0]) * playerMovSpeed;
     }
     if (keysPressed["ArrowRight"]) {
       playerRot[0] += playerRotSpeed;
@@ -165,6 +169,19 @@ function main() {
     }
     if (keysPressed["ArrowDown"]) {
       playerRot[1] += playerRotSpeed;
+    }
+    console.log(playerRot);
+    if (playerRot[0] > Math.PI * 2) {
+      playerRot[0] = 0;
+    }
+    if (playerRot[0] < (Math.PI * 2) * -1) {
+      playerRot[0] = 0;
+    }
+    if (playerRot[1] > (1.0/2.0) * Math.PI) {
+      playerRot[1] = (1.0/2.0) * Math.PI;
+    }
+    if (playerRot[1] < -1 * (1.0/2.0) * Math.PI) {
+      playerRot[1] = -1 * (1.0/2.0) * Math.PI;
     }
   
     drawScene(gl, programInfo, buffers, texture, cubePositions, playerPos, playerRot);

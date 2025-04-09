@@ -1,6 +1,6 @@
 function drawScene(gl, programInfo, buffers, texture, cubePositions, playerPos, playerRot) {
   // Set clear color, depth, and enable depth testing.
-  gl.clearColor(0.4, 0.7, 0.8, 1.0);
+  gl.clearColor(0.5, 0.8, 1.0, 1.0);
   gl.clearDepth(1.0);
   gl.enable(gl.DEPTH_TEST);
   gl.depthFunc(gl.LEQUAL);
