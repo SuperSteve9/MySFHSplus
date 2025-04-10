@@ -1,12 +1,17 @@
 import { initBuffers } from "./init-buffers.js";
 import { drawScene } from "./draw-scene.js";
 
-const playerPos = [0, 4, 0];
-playerPos[1] *= -1;
-const playerRot = [0, 0, 0];
-const playerMovSpeed = 0.1;
+const playerPos = [0, 2.25, 0];
+const playerRot = [0, 0, Math.PI];
+const camera_height = 2.25;
+const cubePositions = new Map();
+const playerMovSpeed = 0.05;
 const playerRotSpeed = 0.03;
+let playerVelocity = 0.1;
+const gravity = 0.0098;
+const terminalVel = 0.3;
 const keysPressed = {};
+const flymode = false;
 const canvas = document.querySelector("#glcanvas");
 let lastFrameTime = performance.now();
 let frameCount = 0;
@@ -17,35 +22,67 @@ window.addEventListener("keydown", (event) => {
   keysPressed[event.key] = true;
 });
 
-window.addEventListener("keypress", (event) => {
-  keysPressed[event.key] = true;
-}); 
-
 window.addEventListener("keyup", (event) => {
   keysPressed[event.key] = false;
 });
 
 canvas.addEventListener("click", () => {
-  console.log("canvas clicked!");
-  canvas.requestPointerLock();
+  console.log(raycast(3.2));
 });
-
-canvas.addEventListener("mousemove", (event) => {
-  const rect = canvas.getBoundingClientRect();                    // Get canvas position on the page
-  const x = event.clientX - rect.left;         // Mouse X within canvas
-  const y = event.clientY - rect.top;          // Mouse Y within canvas
-  console.log(`Mouse position: (${x}, ${y})`);
-});
-
 
 function generateChunk(x, y, cubePositions) {
   for (let i = 0; i > 16 * -1; i--) {
     for (let j = 0; j < 16; j++) {
       for (let k = 0; k > -2; k-=2) {
-        cubePositions.push([(j * 2) + x * 16, k, (i * 2) + y * 16]);
+        const key = `${(j) + x * 16},${k},${(i) + y * 16}`;
+        cubePositions.set(key, true);
       }
     }
   }
+}
+
+function raycast(range) {
+  console.log(playerRot);
+  const fray = [
+    Math.cos(playerRot[1]) * Math.sin(playerRot[0]),
+    Math.sin(playerRot[1]),
+    Math.cos(playerRot[1]) * Math.cos(playerRot[0])
+  ];
+  const step = 0.1;
+
+  for (let i = 0; i < range; i+= step) {
+    const dx = playerPos[0] + fray[0] * i;
+    const dy = playerPos[1] + fray[1] * i;
+    const dz = playerPos[2] + fray[2] * i;
+
+    const x = Math.floor(dx + 0.5);
+    const y = Math.floor(dy + 0.5);
+    const z = Math.floor(dz + 0.5);
+
+    if (cubePositions.has(`${-x},${-y},${-z}`)) {
+      cubePositions.delete(`${-x},${-y},${-z}`);
+      break;
+    }
+  }
+
+}
+
+for (let i = -4; i < 4; i++) {
+  for (let j = -4; j < 4; j++) {
+    generateChunk(i, j, cubePositions);
+  }
+}
+cubePositions.set(`${-1},${-1},${0}`, true);
+cubePositions.set(`${-1},${-2},${0}`, true);
+
+function touchingGround() {
+  const x = Math.floor(playerPos[0] + 0.5);
+  const y = Math.floor(playerPos[1] + 0.5);
+  const z = Math.floor(playerPos[2] + 0.5);
+  if (cubePositions.has(`${-x},${-y + 2},${-z}`)) {
+    return true;
+  }
+
 }
 
 main();
@@ -60,11 +97,6 @@ function main() {
     alert("Unable to initialize WebGL. Your browser or machine may not support it.");
     return;
   }
-
-  // Set clear color to black, fully opaque
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
-  // Clear the color buffer with specified clear color
-  gl.clear(gl.COLOR_BUFFER_BIT);
 
   // Vertex shader program
 
@@ -144,31 +176,23 @@ function main() {
       lastFpsUpdate = now;
       console.log(`FPS: ${fps}`);
     }
-  
-    const cubePositions = [];
-
-    for (let i = -4; i < 4; i++) {
-      for (let j = -4; j < 4; j++) {
-        generateChunk(i, j, cubePositions);
-      }
-    }
 
   
     if (keysPressed["w"]) {
       playerPos[2] += Math.cos(playerRot[0]) * playerMovSpeed;
-      playerPos[0] -= Math.sin(playerRot[0]) * playerMovSpeed;
+      playerPos[0] += Math.sin(playerRot[0]) * playerMovSpeed;
     }
     if (keysPressed["s"]) {
       playerPos[2] -= Math.cos(playerRot[0]) * playerMovSpeed;
-      playerPos[0] += Math.sin(playerRot[0]) * playerMovSpeed;
+      playerPos[0] -= Math.sin(playerRot[0]) * playerMovSpeed;
     }
     if (keysPressed["a"]) {
       playerPos[2] += Math.sin(playerRot[0]) * playerMovSpeed;
-      playerPos[0] += Math.cos(playerRot[0]) * playerMovSpeed;
+      playerPos[0] -= Math.cos(playerRot[0]) * playerMovSpeed;
     }
     if (keysPressed["d"]) {
       playerPos[2] -= Math.sin(playerRot[0]) * playerMovSpeed;
-      playerPos[0] -= Math.cos(playerRot[0]) * playerMovSpeed;
+      playerPos[0] += Math.cos(playerRot[0]) * playerMovSpeed;
     }
     if (keysPressed["ArrowRight"]) {
       playerRot[0] += playerRotSpeed;
@@ -177,10 +201,10 @@ function main() {
       playerRot[0] -= playerRotSpeed;
     }
     if (keysPressed["ArrowUp"]) {
-      playerRot[1] -= playerRotSpeed;
+      playerRot[1] += playerRotSpeed;
     }
     if (keysPressed["ArrowDown"]) {
-      playerRot[1] += playerRotSpeed;
+      playerRot[1] -= playerRotSpeed;
     }
     if (keysPressed["r"]) {
       playerPos[0] = -16 + Math.random() * 32;
@@ -188,12 +212,30 @@ function main() {
     }
 
     if (keysPressed[" "]) {
-      playerPos[1] -= playerMovSpeed;
+      if (flymode) {
+        playerPos[1] += playerMovSpeed;
+      } else {
+        if (touchingGround()) {
+          playerPos[1] += 1.1;
+        }
+      }
     }
     if (keysPressed["Shift"]) {
-      playerPos[1] += playerMovSpeed;
+      if (flymode) {
+        playerPos[1] -= playerMovSpeed;
+      }
     }
-    console.log(playerRot);
+
+    if (!touchingGround()) {
+      playerPos[1] -= playerVelocity;
+      if ( playerVelocity < terminalVel) {
+        playerVelocity += gravity;
+      }
+    } else {
+      playerPos[1] = Math.floor((playerPos[1] - camera_height) + 0.5) + camera_height;
+      playerVelocity = 0;
+    }
+    // clamps
     if (playerRot[0] > Math.PI * 2) {
       playerRot[0] = 0;
     }

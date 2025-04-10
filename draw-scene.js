@@ -9,7 +9,7 @@ function drawScene(gl, programInfo, buffers, texture, cubePositions, playerPos, 
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   // Create a perspective projection matrix.
-  const fieldOfView = (45 * Math.PI) / 180;
+  const fieldOfView = (70 * Math.PI) / 180;
   const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
   const zNear = 0.1;
   const zFar = 256.0;
@@ -42,32 +42,31 @@ function drawScene(gl, programInfo, buffers, texture, cubePositions, playerPos, 
   const offset = 0;
 
   // Loop over each cube position.
-  cubePositions.forEach((position) => {
-    // Create a fresh model-view matrix for each cube.
+  cubePositions.forEach((exists, key) => {
+    if (!exists) return; // Just in case you want to support "removing" cubes later
+  
+    const position = key.split(',').map(Number); // Convert "x,y,z" → [x, y, z]
+  
     const modelViewMatrix = mat4.create();
-
     const renderPosition = vec3.create();
     vec3.add(renderPosition, position, playerPos);
-
-    mat4.rotate(modelViewMatrix, modelViewMatrix, playerRot[1], [1, 0, 0]);
+  
+    mat4.rotate(modelViewMatrix, modelViewMatrix, playerRot[1], [-1, 0, 0]);
     mat4.rotate(modelViewMatrix, modelViewMatrix, playerRot[0], [0, 1, 0]);
-    // Translate to the cube's position. Each 'position' is an [x, y, z] array.
+    mat4.rotate(modelViewMatrix, modelViewMatrix, playerRot[2], [0, 0, 1]);
+  
     mat4.translate(modelViewMatrix, modelViewMatrix, renderPosition);
-
-    // Optionally: You could apply a common rotation here if needed.
-
-
-    // Set the model-view matrix uniform.
+  
     gl.uniformMatrix4fv(
       programInfo.uniformLocations.modelViewMatrix,
       false,
       modelViewMatrix
     );
-
-    gl.cullFace(gl.FRONT_AND_BACK);
-    // Draw the cube.
+  
+    gl.cullFace(gl.FRONT);
     gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
   });
+  
 }
 
 
