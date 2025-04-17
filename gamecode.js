@@ -79,10 +79,8 @@ function touchingGround() {
   const x = Math.floor(playerPos[0] + 0.5);
   const y = Math.floor(playerPos[1] + 0.5);
   const z = Math.floor(playerPos[2] + 0.5);
-  if (cubePositions.has(`${-x},${-y + 2},${-z}`)) {
-    return true;
-  }
-
+  console.log(cubePositions.has(`${-x},${-y + 2},${-z}`));
+  return cubePositions.has(`${-x},${-y + 2},${-z}`);
 }
 
 main();
@@ -212,12 +210,8 @@ function main() {
     }
 
     if (keysPressed[" "]) {
-      if (flymode) {
-        playerPos[1] += playerMovSpeed;
-      } else {
-        if (touchingGround()) {
-          playerPos[1] += 1.1;
-        }
+      if (touchingGround()) {
+        playerVelocity = -0.25;
       }
     }
     if (keysPressed["Shift"]) {
@@ -225,15 +219,15 @@ function main() {
         playerPos[1] -= playerMovSpeed;
       }
     }
-
+    console.log(playerVelocity);
+    playerPos[1] -= playerVelocity;
     if (!touchingGround()) {
-      playerPos[1] -= playerVelocity;
       if ( playerVelocity < terminalVel) {
         playerVelocity += gravity;
       }
     } else {
-      playerPos[1] = Math.floor((playerPos[1] - camera_height) + 0.5) + camera_height;
       playerVelocity = 0;
+      playerPos[1] = Math.floor((playerPos[1] - camera_height) + 0.5) + camera_height;
     }
     // clamps
     if (playerRot[0] > Math.PI * 2) {
