@@ -126,6 +126,9 @@ function appendGrades(gradeElems, gpas, weightedElems, grades) {
 
 // Create the GPA tile block
 function createGPATile(baseTile, gpas) {
+  const savedGPA = JSON.parse(localStorage.getItem('GPA'));
+  let actualGPA = Math.trunc(calcGPAAvg(gpas) * 100) / 100; 
+  localStorage.setItem('GPA', JSON.stringify(Math.trunc(calcGPAAvg(gpas) * 100) / 100));
   let GPATile = baseTile.cloneNode(true);
   GPATile.id = 'GPA';
 
@@ -137,7 +140,32 @@ function createGPATile(baseTile, gpas) {
 
   $(GPATile).find('.col-md-12 div a h1').unwrap();
   let GPA = GPATile.querySelector('.col-md-12 h1');
-  GPA.textContent = Math.trunc(calcGPAAvg(gpas) * 100) / 100;
+  GPA.textContent = actualGPA;
+  if (savedGPA.isNaN) {
+    GPA.textContent = "ERROR: Reload page";
+  }
+
+  let GPAChange = GPATile.querySelector('.col-md-12');
+  GPAChange.innerHTML = '';
+
+  let changedGPAText;
+  if (savedGPA > actualGPA) {
+    changedGPAText = `<span style="color: red;">↓${savedGPA}</span>`;
+  } else if (savedGPA < actualGPA) {
+    changedGPAText = `<span style="color: green;">↑${savedGPA}</span>`;
+  } else {
+    changedGPAText = ""
+  }
+
+  let CurrentGPA = document.createElement('h1');
+  CurrentGPA.innerHTML = actualGPA + changedGPAText;
+  GPAChange.appendChild(CurrentGPA);
+  
+  let text = document.createElement('p');
+  text.textContent = "Current Weighted GPA";
+  GPAChange.appendChild(text);
+
+
 
   let dataAtt = GPATile.querySelector('.bb-tile-title');
   dataAtt.setAttribute('data-target', '#GPACollapse');

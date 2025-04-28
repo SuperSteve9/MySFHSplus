@@ -3,7 +3,6 @@ import { drawScene } from "./draw-scene.js";
 
 const playerPos = [0, 2.25, 0];
 const playerRot = [0, 0, Math.PI];
-const camera_height = 2.25;
 const cubePositions = new Map();
 const playerMovSpeed = 0.05;
 const playerRotSpeed = 0.03;
@@ -17,6 +16,7 @@ let lastFrameTime = performance.now();
 let frameCount = 0;
 let fps = 0;
 let lastFpsUpdate = performance.now();
+
 
 window.addEventListener("keydown", (event) => {
   keysPressed[event.key] = true;
@@ -74,12 +74,12 @@ for (let i = -4; i < 4; i++) {
 }
 cubePositions.set(`${-1},${-1},${0}`, true);
 cubePositions.set(`${-1},${-2},${0}`, true);
+cubePositions.set(`${1},${-1},${0}`, true);
 
 function touchingGround() {
   const x = Math.floor(playerPos[0] + 0.5);
   const y = Math.floor(playerPos[1] + 0.5);
   const z = Math.floor(playerPos[2] + 0.5);
-  console.log(cubePositions.has(`${-x},${-y + 2},${-z}`));
   return cubePositions.has(`${-x},${-y + 2},${-z}`);
 }
 
@@ -162,6 +162,10 @@ function main() {
   
 
   function render() {
+    if (cubePositions.has(`${Math.floor(-playerPos[0] + 0.5)},${Math.floor(-playerPos[1] + 0.5)},${Math.floor(-playerPos[2] + 0.5)}`) || cubePositions.has(`${Math.floor(-playerPos[0] + 0.5)},${Math.floor(-playerPos[1] + 0.5) + 1},${Math.floor(-playerPos[2] + 0.5)}`)) {
+      playerPos[2] -= Math.cos(playerRot[0]) * playerMovSpeed;
+      playerPos[0] -= Math.sin(playerRot[0]) * playerMovSpeed;
+    }
     const now = performance.now();
     const delta = now - lastFrameTime;
     lastFrameTime = now;
@@ -206,6 +210,7 @@ function main() {
     }
     if (keysPressed["r"]) {
       playerPos[0] = -16 + Math.random() * 32;
+      playerPos[1] = 10
       playerPos[2] = -16 + Math.random() * 32;
     }
 
@@ -219,7 +224,6 @@ function main() {
         playerPos[1] -= playerMovSpeed;
       }
     }
-    console.log(playerVelocity);
     playerPos[1] -= playerVelocity;
     if (!touchingGround()) {
       if ( playerVelocity < terminalVel) {
@@ -227,7 +231,7 @@ function main() {
       }
     } else {
       playerVelocity = 0;
-      playerPos[1] = Math.floor((playerPos[1] - camera_height) + 0.5) + camera_height;
+      playerPos[1] = Math.floor((playerPos[1] - 2.25) + 0.5) + 2.25;
     }
     // clamps
     if (playerRot[0] > Math.PI * 2) {
