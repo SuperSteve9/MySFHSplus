@@ -25,5 +25,6 @@ curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/p
 curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/popup/popup.js" --output popup.js
 
 cd ..
+cd ..
 
 curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/run.bat" --output run.bat
