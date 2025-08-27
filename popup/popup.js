@@ -5,6 +5,3 @@ document.getElementById("WIPc").addEventListener("click", () => {
 document.getElementById("WIPs").addEventListener("click", () => {
     alert("WIP");
 })
-document.getElementById("WIPg").addEventListener("click", () => {
-    alert("WIP");
-})

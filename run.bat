@@ -1,10 +1,10 @@
 @echo off
 echo Checking for updates...
 
-if not exist mySFHS (
-  mkdir mySFHS
+if not exist mySFHS+ (
+  mkdir mySFHS+
 )
-cd mySFHS
+cd mySFHS+
 
 curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/content.js" --output content.js
 curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/manifest.json" --output manifest.json
