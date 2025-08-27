@@ -1,73 +1,154 @@
 // const body = document.querySelector("body");
 // body.style.setProperty("background-color", "#252525");
-const observer = new MutationObserver(() => {
-    // deep ass element to wait for observer
-    const target = getElementFromXPath('//*[@id="coursesContainer"]/div[9]/div[4]/h3', document);
+function runOnDomChange() {
+    let lastUrl = location.href;
+    let processedForThisUrl = false;
+    let running = false;
 
-    if (target) {
-        observer.disconnect();
-        createBanner("MYSFHS+ DEVELOPMENT VERSION 2.5.10 DO NOT DISTRIBUTE", document);
-        const row = getElementFromXPath('//*[@id="site-main"]/div/div/div/div[3]', document);
-        const conductDIV = getElementFromXPath('//*[@id="conduct"]', document);
-
-        let grades = [];
-
-        const classes = getElementFromXPath('//*[@id="coursesContainer"]', document);
-        for (const child of classes.children) {
-            let name = child.querySelector("h3").textContent;
-            name = name.split(" - ")[0];
-            let grade = child.querySelector(".showGrade").textContent;
-            grade = grade.trim();
-            let gradeLetter = null;
-            if (grade == "--") {
-                grade = "no grade value";
-            } else {
-                grade = parseFloat(grade);
-                gradeLetter = getGradeLetter(grade);
-            }
-            if (name.startsWith("AP") || name.endsWith("-H")) {
-                console.log(name + " is weighted with grade " + grade);
-                if(!isNaN(grade)) {
-                    grades.push(calcGPA(grade, true));
-                    let textElm = child.querySelector(".showGrade");
-                    textElm.textContent += "(" + gradeLetter + ")";
-                    textElm.dataset.modified = true;           
-                }
-            } else if (name == "Homeroom") {
-                console.log("thats homeroom ignore ts");
-            } else {
-                console.log(name + " is not weighted with grade " + grade);
-                if(!isNaN(grade)) {
-                    grades.push(calcGPA(grade, false));
-                    let textElm = child.querySelector(".showGrade");
-                    textElm.textContent += "(" + gradeLetter + ")";
-                    textElm.dataset.modified = true;
-                }
-            }
-
-
-
-        }
-
-        console.log(grades);
-        const GPA = calcCumGPA(grades);
-        console.log(GPA);
-
-        const gpaTile = createDIV(conductDIV, "GPA", GPA.toPrecision(3), "", "gpa");
-        row.appendChild(gpaTile);
+    // reset when spa changes url
+    const _push = history.pushState;
+    const _replace = history.replaceState;
+    function markUrlChanged() {
+        lastUrl = location.href;
+        processedForThisUrl = false;
     }
-});
+    history.pushState = function () { _push.apply(this, arguments); markUrlChanged(); };
+    history.replaceState = function () { _replace.apply(this, arguments); markUrlChanged(); };
+    window.addEventListener("popstate", markUrlChanged);
 
-observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-});
+    let tick = null;
+    const schedule = (fn) => {
+        clearTimeout(tick);
+        tick = setTimeout(fn, 50); // kms
+    };
+
+    const observer = new MutationObserver(() => {
+        if (location.href !== lastUrl) {
+            lastUrl = location.href;
+            processedForThisUrl = false;
+        }
+        schedule(runOncePerUrl);
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    function runOncePerUrl() {
+        if (running || processedForThisUrl) return;
+
+        const target = getElementFromXPath('//*[@id="coursesContainer"]/div[9]/div[4]/h3', document);
+        if (!target) return;
+
+        running = true;
+        try {
+            // if gpa already there don't touch it
+            if (document.getElementById("gpa")) {
+                processedForThisUrl = true;
+                return;
+            }
+
+            let oldGrades = JSON.parse(localStorage.getItem("grades"));
+            const row = getElementFromXPath('//*[@id="site-main"]/div/div/div/div[3]', document);
+            const conductDIV = getElementFromXPath('//*[@id="conduct"]', document);
+
+            let gradesPA = [];
+            let grades = [];
+            const classesThing = getElementFromXPath('//*[@id="coursesContainer"]', document);
+            let classes = [];
+
+            for (const child of classesThing.children) {
+                let name = child.querySelector("h3").textContent;
+                name = name.split(" - ")[0];
+                let grade = child.querySelector(".showGrade").textContent.trim();
+                let gradeLetter = null;
+
+                classes.push(name);
+
+
+                if (grade == "--") {
+                    grade = "no grade value";
+                    if (name !== "Homeroom") {
+                        grades.push(null);
+                        gradesPA.push(null);
+                    }
+                } else {
+                    grade = parseFloat(grade);
+                    grades.push(grade);
+                    gradeLetter = getGradeLetter(grade);
+                }
+
+                if (name.startsWith("AP") || name.endsWith("-H")) {
+                    if (!isNaN(grade)) {
+                        gradesPA.push(calcGPA(grade, true));
+                        let textElm = child.querySelector(".showGrade");
+                        if (!textElm.dataset.modified) {
+                            textElm.textContent += "(" + gradeLetter + ")";
+                            textElm.dataset.modified = true;
+                        }
+                    }
+                } else if (name !== "Homeroom") {
+                    if (!isNaN(grade)) {
+                        gradesPA.push(calcGPA(grade, false));
+                        let textElm = child.querySelector(".showGrade");
+                        if (!textElm.dataset.modified) {
+                            textElm.textContent += "(" + gradeLetter + ")";
+                            textElm.dataset.modified = true;
+                        }
+                    }
+                }
+            }
+
+            let gradeChanges = "";
+            if (!arraysEqual(grades, oldGrades)) {
+                for (i = 0; i < grades.length; i++) {
+                    if (grades[i] != oldGrades[i]) {
+                        if (grades[i] >= oldGrades[i]) {
+                            gradeChanges += classes[i] + ": " + oldGrades[i].toPrecision(3) + " ↑ " + grades[i].toPrecision(3) + "\n";
+                        } else {
+                            gradeChanges += classes[i] + ": " + oldGrades[i].toPrecision(3) + " ↓ " + grades[i].toPrecision(3) + "\n";
+                        }
+                    }
+                }
+            }
+
+                if (gradeChanges === "") {
+                    gradeChanges = ("No grade changes.");
+                }
+            
+
+            console.log(grades);
+            console.log(gradesPA);
+            const GPA = calcCumGPA(gradesPA);
+            console.log(GPA);
+
+            localStorage.setItem("grades", JSON.stringify(grades));
+
+            const gpaTile = createGPADIV(conductDIV, "GPA", GPA.toPrecision(3), "Current Weighted GPA", "gpa");
+            gpaTile.id = "gpa";
+            row.appendChild(gpaTile);
+
+            const gradeChangeTile = createGradeChangeDIV(conductDIV, "Grade Changes", gradeChanges, "gradeChanges");
+            gradeChangeTile.id = "gradeChanges";
+            row.appendChild(gradeChangeTile);
+
+            processedForThisUrl = true;
+        } finally {
+            running = false;
+        }
+    }
+
+    schedule(runOncePerUrl); // run once on load if target already exists
+}
+
+runOnDomChange();
+
+
 
 // ACTIVE FUNCTIONS
 
 
 
 // HELPER FUNCTIONS
+
 
 // calculate GPA per class
 // bro tf is this GPA calculation maybe idk but this seems kinda stupid
@@ -98,9 +179,14 @@ function calcGPA(grade, Weighted) {
 // calculate cumulative GPA
 // i don't even know how this works if im even doing it correctly but i guess ill see
 function calcCumGPA(grades) {
-    var count = grades.length;
+    let count = 0;
+    for (i = 0; i < grades.length; i++) {
+        if (grades[i] != null) {
+            count++;
+        }
+    }
     var total = 0;
-    for (i=0; i<grades.length; i++) {
+    for (i = 0; i < grades.length; i++) {
         total += grades[i];
     }
 
@@ -134,7 +220,7 @@ function getGradeLetter(grade) {
         case (grade >= 74):
             return 'D+';
         case (grade >= 72):
-            return 'D';        
+            return 'D';
         case (grade >= 70):
             return 'D-';
         default:
@@ -142,7 +228,7 @@ function getGradeLetter(grade) {
     }
 }
 
-function createDIV(target, title, maintext, subtext, intname) {
+function createGPADIV(target, title, maintext, subtext, intname) {
     const cleanedDIV = target.cloneNode(true);
     cleanedDIV.id = intname;
     const Title = cleanedDIV.querySelector(".bb-tile-header");
@@ -154,6 +240,23 @@ function createDIV(target, title, maintext, subtext, intname) {
     mainText.textContent = maintext;
     const subText = cleanedDIV.querySelector(".muted h5")
     subText.textContent = subtext;
+    const collapseOBJ = cleanedDIV.querySelector("#conductCollapse");
+    collapseOBJ.id = intname + "Collapse";
+    const otherCollapseOBJ = cleanedDIV.querySelector(".bb-tile-title");
+    otherCollapseOBJ.setAttribute("data-target", "#" + intname + "Collapse");
+    return cleanedDIV;
+}
+
+function createGradeChangeDIV(target, title, Stext, intname) {
+    const cleanedDIV = target.cloneNode(true);
+    cleanedDIV.id = intname;
+    const Title = cleanedDIV.querySelector(".bb-tile-header");
+    Title.textContent = title;
+    const mainTextParent = cleanedDIV.querySelector("a");
+    mainTextParent.remove();
+    const subText = cleanedDIV.querySelector(".muted h5")
+    subText.style.whiteSpace = "pre-line";
+    subText.textContent = Stext;
     const collapseOBJ = cleanedDIV.querySelector("#conductCollapse");
     collapseOBJ.id = intname + "Collapse";
     const otherCollapseOBJ = cleanedDIV.querySelector(".bb-tile-title");
@@ -188,4 +291,13 @@ function createBanner(text, document) {
     `;
 
     document.body.appendChild(banner);
+}
+
+function arraysEqual(a, b) {
+    if (!Array.isArray(a) || !Array.isArray(b)) return false;
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
 }
