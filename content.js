@@ -103,9 +103,9 @@ function runOnDomChange() {
                 for (i = 0; i < grades.length; i++) {
                     if (grades[i] != oldGrades[i]) {
                         if (grades[i] >= oldGrades[i]) {
-                            gradeChanges += classes[i] + ": " + oldGrades[i].toPrecision(3) + " ↑ " + grades[i].toPrecision(3) + "\n";
+                            gradeChanges += classes[i] + ": " + oldGrades[i].toFixed(3) + " ↑ " + grades[i].toFixed(3) + "\n";
                         } else {
-                            gradeChanges += classes[i] + ": " + oldGrades[i].toPrecision(3) + " ↓ " + grades[i].toPrecision(3) + "\n";
+                            gradeChanges += classes[i] + ": " + oldGrades[i].toFixed(3) + " ↓ " + grades[i].toFixed(3) + "\n";
                         }
                     }
                 }
@@ -302,3 +302,4 @@ function arraysEqual(a, b) {
     }
     return true;
 }
+
