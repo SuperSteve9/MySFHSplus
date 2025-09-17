@@ -45,8 +45,9 @@ function runOnDomChange() {
                 processedForThisUrl = true;
                 return;
             }
-
-            let oldGrades = JSON.parse(localStorage.getItem("grades"));
+            if (localStorage.getItem("grades")) {
+                let oldGrades = JSON.parse(localStorage.getItem("grades"));
+            }
             const row = getElementFromXPath('//*[@id="site-main"]/div/div/div/div[3]', document);
             const conductDIV = getElementFromXPath('//*[@id="conduct"]', document);
 
