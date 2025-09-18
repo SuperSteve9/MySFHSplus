@@ -39,94 +39,102 @@ function runOnDomChange() {
         if (!target) return;
 
         running = true;
+        // RUN ALL CODE IN THIS FUNCTION PLEASE I BEG
         try {
-            // if gpa already there don't touch it
             if (document.getElementById("gpa")) {
                 processedForThisUrl = true;
                 return;
             }
-            if (localStorage.getItem("grades")) {
-                let oldGrades = JSON.parse(localStorage.getItem("grades"));
-            }
+
+            // format is class name, grade, weighted
+            let currentClassData = [];
+
+            // other variables and sht
+            let gpas = [];
+            let gradeChanges = "";
             const row = getElementFromXPath('//*[@id="site-main"]/div/div/div/div[3]', document);
             const conductDIV = getElementFromXPath('//*[@id="conduct"]', document);
 
-            let gradesPA = [];
-            let grades = [];
-            const classesThing = getElementFromXPath('//*[@id="coursesContainer"]', document);
-            let classes = [];
+            // element where all of the elments for the classes are found
+            const coursesContainer = getElementFromXPath('//*[@id="coursesContainer"]', document);
 
-            for (const child of classesThing.children) {
+            // all stuff to do with grades
+            for (const child of coursesContainer.children) {
+                // name things
                 let name = child.querySelector("h3").textContent;
                 name = name.split(" - ")[0];
+
+                // grade stuff
                 let grade = child.querySelector(".showGrade").textContent.trim();
-                let gradeLetter = null;
-
-                classes.push(name);
-
-
-                if (grade == "--") {
-                    grade = "no grade value";
-                    if (name !== "Homeroom") {
-                        grades.push(null);
-                        gradesPA.push(null);
-                    }
-                } else {
-                    grade = parseFloat(grade);
-                    grades.push(grade);
-                    gradeLetter = getGradeLetter(grade);
+                grade = parseFloat(grade);
+                if (isNaN(grade)) {
+                    grade = null;
                 }
 
+                // weighted or not
+                let weighted = false;
                 if (name.startsWith("AP") || name.endsWith("-H")) {
-                    if (!isNaN(grade)) {
-                        gradesPA.push(calcGPA(grade, true));
-                        let textElm = child.querySelector(".showGrade");
-                        if (!textElm.dataset.modified) {
-                            textElm.textContent += "(" + gradeLetter + ")";
-                            textElm.dataset.modified = true;
-                        }
-                    }
-                } else if (name !== "Homeroom") {
-                    if (!isNaN(grade)) {
-                        gradesPA.push(calcGPA(grade, false));
-                        let textElm = child.querySelector(".showGrade");
-                        if (!textElm.dataset.modified) {
-                            textElm.textContent += "(" + gradeLetter + ")";
-                            textElm.dataset.modified = true;
-                        }
+                    weighted = true;
+                }
+
+                // gpa
+                gpas.push(calcGPA(grade, weighted));
+
+                // change
+                console.log(grade);
+
+                currentClassData.push({ class: name, grade: grade, weight: weighted});
+
+                // modifications
+                if (!isNaN(grade)) {
+                    // actual modification
+                    let textElement = child.querySelector(".showGrade");
+                    if(!textElement.dataset.modified) {
+                        textElement.textContent += "(" + getGradeLetter(grade) + ")";
+                        textElement.dataset.modified = true;
                     }
                 }
             }
 
-            let gradeChanges = "";
+            // data shit
+            let oldData = JSON.parse(localStorage.getItem("data"));
+            if (oldData === null) {
+                oldData = currentClassData;
+                localStorage.setItem("data", JSON.stringify(currentClassData));
+            }
+
+            const grades = currentClassData.map(entry => entry.grade);           
+            const oldGrades = oldData.map(entry => entry.grade);
+
             if (!arraysEqual(grades, oldGrades)) {
                 for (i = 0; i < grades.length; i++) {
                     if (grades[i] != oldGrades[i]) {
                         if (grades[i] >= oldGrades[i]) {
-                            gradeChanges += classes[i] + ": " + oldGrades[i].toFixed(3) + " ↑ " + grades[i].toFixed(3) + "\n";
+                            gradeChanges += currentClassData[i].class + ": " + oldGrades[i].toFixed(3) + " ↑ " + grades[i].toFixed(3) + "\n";
                         } else {
-                            gradeChanges += classes[i] + ": " + oldGrades[i].toFixed(3) + " ↓ " + grades[i].toFixed(3) + "\n";
+                            gradeChanges += currentClassData[i].class + ": " + oldGrades[i].toFixed(3) + " ↓ " + grades[i].toFixed(3) + "\n";
                         }
                     }
                 }
+            } else {
+                gradeChanges = "No Grade Changes";
             }
 
-                if (gradeChanges === "") {
-                    gradeChanges = ("No grade changes.");
-                }
-            
+            localStorage.setItem("data", JSON.stringify(currentClassData));
 
-            console.log(grades);
-            console.log(gradesPA);
-            const GPA = calcCumGPA(gradesPA);
-            console.log(GPA);
+            // test to see arrays are correct
+            console.log(currentClassData);
+            console.log(gpas);
+            console.log(calcCumGPA(gpas));
 
-            localStorage.setItem("grades", JSON.stringify(grades));
-
-            const gpaTile = createGPADIV(conductDIV, "GPA", GPA.toPrecision(3), "Current Weighted GPA", "gpa");
+            // create GPA tile
+            const gpaTile = createGPADIV(conductDIV, "GPA", (calcCumGPA(gpas)).toPrecision(3), "Current Weighted GPA", "gpa");
             gpaTile.id = "gpa";
             row.appendChild(gpaTile);
 
+            console.log(grades);
+
+            // create grade change tile
             const gradeChangeTile = createGradeChangeDIV(conductDIV, "Grade Changes", gradeChanges, "gradeChanges");
             gradeChangeTile.id = "gradeChanges";
             row.appendChild(gradeChangeTile);
@@ -141,10 +149,6 @@ function runOnDomChange() {
 }
 
 runOnDomChange();
-
-
-
-// ACTIVE FUNCTIONS
 
 
 
@@ -186,10 +190,14 @@ function calcCumGPA(grades) {
             count++;
         }
     }
+    console.log(count);
     var total = 0;
     for (i = 0; i < grades.length; i++) {
-        total += grades[i];
+        if (grades[i] != null) {
+            total += grades[i];
+        }
     }
+    console.log(total);
 
     var cumGPA = total / count;
     return cumGPA;
@@ -229,6 +237,7 @@ function getGradeLetter(grade) {
     }
 }
 
+// prob gonna replace these but idk
 function createGPADIV(target, title, maintext, subtext, intname) {
     const cleanedDIV = target.cloneNode(true);
     cleanedDIV.id = intname;
@@ -248,6 +257,7 @@ function createGPADIV(target, title, maintext, subtext, intname) {
     return cleanedDIV;
 }
 
+// same as GPA
 function createGradeChangeDIV(target, title, Stext, intname) {
     const cleanedDIV = target.cloneNode(true);
     cleanedDIV.id = intname;
@@ -265,6 +275,7 @@ function createGradeChangeDIV(target, title, Stext, intname) {
     return cleanedDIV;
 }
 
+// i don't think i actually need this but i like it :) <3
 function getElementFromXPath(XPath, document) {
     const obj = document.evaluate(
         XPath,
@@ -277,6 +288,7 @@ function getElementFromXPath(XPath, document) {
     return obj;
 }
 
+// testing shit idrk
 function createBanner(text, document) {
     const banner = document.createElement("div");
     banner.textContent = text;
@@ -294,6 +306,7 @@ function createBanner(text, document) {
     document.body.appendChild(banner);
 }
 
+// stupid fucking arrays in js cant fucking work for fucking sake
 function arraysEqual(a, b) {
     if (!Array.isArray(a) || !Array.isArray(b)) return false;
     if (a.length !== b.length) return false;
