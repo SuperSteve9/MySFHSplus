@@ -9,8 +9,8 @@ cd mySFHS+
 curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/content.js" --output content.js
 curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/manifest.json" --output manifest.json
 
-if not exist icons (
-  mkdir icons
+if not exist img (
+  mkdir img
 )
 cd img
 curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/img/128.png" --output 128.png
