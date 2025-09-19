@@ -1,5 +1,110 @@
-// const body = document.querySelector("body");
-// body.style.setProperty("background-color", "#252525");
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg.action === "darken") {
+        document.body.style.setProperty("background-color", "#252525");
+        document.body.style.setProperty("color", "#dbdbdb");
+        document.querySelector(".well").style.setProperty("background-color", "#515151");
+        document.querySelector(".well").style.setProperty("border", "#3b3535");
+        document.querySelector(".subnavbar").style.setProperty("background-color", "#454b4f", "important");
+        document.querySelector(".subnavbar").style.setProperty("border-color", "#000000", "important");
+        document.querySelector(".sec-15-bgc, .sec-15-bgc-hover:hover").style.setProperty("background-color", "#333333", "important");
+        document.querySelector(".pri-100-bgc, .pri-100-bgc-hover:hover").style.setProperty("background-color", "#001327", "important");
+        document.querySelector(".pri-100-fgc, .pri-100-fgc-hover:hover").style.setProperty("color", "#c3d2e1", "important");
+        document.querySelector(".black-fgc, .black-fgc-hover:hover").style.setProperty("color", "#b5b6c9", "important");
+        document.querySelector("#gradeSelect").style.setProperty("background-color", "#373737");
+        const style = document.createElement("style");
+        style.textContent = `
+        .bb-tile .bb-tile-title {
+            background-color: #444444ff !important;
+            border-top: 4px solid #3b3b3b !important;
+        }
+
+        .bb-tile .bb-tile-title .bb-tile-header {
+            color: #dbdbdb !important;
+        }
+
+        .bb-tile-content {
+            background-color: #212121 !important;
+            border-top: 1px solid #292929 !important;
+        }
+
+        .bb-tile hr {
+            border-top: solid 1px #313131 !important;
+        }
+
+        a {
+            color: #6a929d !important;
+        }
+
+        .thumbnail {
+            background-color: #2b2b2b !important;
+        }
+
+        .label {
+            color: #0e0e0e !important;
+        }
+
+        .label-sucess {
+            background-color: #5c7946 !important;
+        }
+
+        .btn-default {
+            color: #ffffff !important;
+            background-color: #737373 !important;
+            border-color: #0c0c0c !important;
+        }
+
+        .popContainerStraight {
+            background-image: linear-gradient(#434343, #000000) !important;
+            border: 1px solid #353535 !important;
+            text-shadow: 0 1px 0 #313131 !important;
+        }
+
+        #courses #coursesContainer .row:nth-child(odd) {
+            background-color: #454545 !important;
+        }
+
+        #courses #coursesContainer .row:hover {
+            background-color: #5d5d5d !important;
+        }
+
+        #courses #coursesContainer .row:nth-child(odd):hover {
+            background-color: #5d5d5d !important;
+        }
+
+        #courses #activitiesContainer .row:nth-child(odd) {
+            background-color: #454545 !important;
+        }
+
+        #courses #activitiesContainer .row:hover {
+            background-color: #5d5d5d !important;
+        }
+
+        #courses #activitiesContainer .row:nth-child(odd):hover {
+            background-color: #5d5d5d !important;
+        }
+
+        .badge, .bb-show-more {
+            background-color: #272727 !important;
+            color: #cbcbcb !important;
+        }
+
+        .badge-danger {
+            background-color: #730200 !important;
+            color: #cbcbcb !important;
+        }
+
+        .subnavbar .nav > .active > a, .subnavbar .nav > .active > a:hover {
+            border-color: #2b2b2b !important;
+        }
+
+        #site-nav ul.topnav > li > a.active, #site-nav ul.topnav > li > a:hover, .subnavbar .nav > .active > a, .subnavbar .nav > .active > a:hover {
+            background-image : -webkit-linear-gradient(top, #646d73 0%, #393939 100%) !important;
+        }
+        `;
+        document.head.appendChild(style);
+    }
+});
+
 function runOnDomChange() {
     let lastUrl = location.href;
     let processedForThisUrl = false;
@@ -83,13 +188,13 @@ function runOnDomChange() {
                 // change
                 console.log(grade);
 
-                currentClassData.push({ class: name, grade: grade, weight: weighted});
+                currentClassData.push({ class: name, grade: grade, weight: weighted });
 
                 // modifications
-                if (!isNaN(grade)) {
+                if (Number.isFinite(grade)) {
                     // actual modification
                     let textElement = child.querySelector(".showGrade");
-                    if(!textElement.dataset.modified) {
+                    if (!textElement.dataset.modified) {
                         textElement.textContent += "(" + getGradeLetter(grade) + ")";
                         textElement.dataset.modified = true;
                     }
@@ -103,17 +208,21 @@ function runOnDomChange() {
                 localStorage.setItem("data", JSON.stringify(currentClassData));
             }
 
-            const grades = currentClassData.map(entry => entry.grade);           
+            const grades = currentClassData.map(entry => entry.grade);
             const oldGrades = oldData.map(entry => entry.grade);
 
             if (!arraysEqual(grades, oldGrades)) {
                 for (i = 0; i < grades.length; i++) {
                     if (grades[i] != oldGrades[i]) {
                         if (grades[i] >= oldGrades[i]) {
-                            gradeChanges += currentClassData[i].class + ": " + oldGrades[i].toFixed(3) + " ↑ " + grades[i].toFixed(3) + "\n";
+                            gradeChanges += `<span style="color: green;">` + currentClassData[i].class + ": " +
+                                oldGrades[i].toFixed(2) + " ↑ " + grades[i].toFixed(2) + "\n";
                         } else {
-                            gradeChanges += currentClassData[i].class + ": " + oldGrades[i].toFixed(3) + " ↓ " + grades[i].toFixed(3) + "\n";
+                            gradeChanges += `<span style="color: red;">` + currentClassData[i].class + ": " +
+                                oldGrades[i].toFixed(2) + " ↓ " + grades[i].toFixed(2) + "\n";
                         }
+
+
                     }
                 }
             } else {
@@ -158,7 +267,9 @@ runOnDomChange();
 // calculate GPA per class
 // bro tf is this GPA calculation maybe idk but this seems kinda stupid
 function calcGPA(grade, Weighted) {
-    var gpa;
+    if (!Number.isFinite(grade)) return null;
+
+    let gpa = null;
     if (grade >= 70 && grade < 76) {
         // point in value bracket kinda like taxes but for grades
         var piv = grade - 70;
@@ -267,7 +378,7 @@ function createGradeChangeDIV(target, title, Stext, intname) {
     mainTextParent.remove();
     const subText = cleanedDIV.querySelector(".muted h5")
     subText.style.whiteSpace = "pre-line";
-    subText.textContent = Stext;
+    subText.innerHTML = Stext;
     const collapseOBJ = cleanedDIV.querySelector("#conductCollapse");
     collapseOBJ.id = intname + "Collapse";
     const otherCollapseOBJ = cleanedDIV.querySelector(".bb-tile-title");
