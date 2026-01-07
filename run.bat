@@ -29,6 +29,9 @@ cd ..
 if not exist spartancraft (
   mkdir spartancraft
 )
+cd spartancraft
+curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/spartancraft/game.html" --output game.html
+curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/spartancraft/main.js" --output main.js
 
 cd ..
 
