@@ -7,3 +7,6 @@ document.getElementById("WIPc").addEventListener("click", () => {
 document.getElementById("WIPs").addEventListener("click", () => {
     alert("WIP");
 })
+document.getElementById("SC").addEventListener("click", () => {
+    window.location.href = "../spartancraft/game.html";
+})
