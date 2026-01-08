@@ -17,9 +17,15 @@ context.configure({ device, format });
 
 // shaders
 const shaderCode = `
+struct Uniforms {
+    m: mat4x4f,
+};
+
+@group(0) @binding(0) var<uniform> uni: Uniforms;
+
 @vertex
-fn vsMain(@location(0) position: vec2f) -> @builtin(position) vec4f {
-    return vec4f(position, 0.0, 1.0);
+fn vsMain(@location(0) position: vec3f) -> @builtin(position) vec4f {
+    return uni.m * vec4f(position, 1.0);
 }
 
 
@@ -31,6 +37,18 @@ fn fsMain() -> @location(0) vec4f {
 
 const shaderModule = device.createShaderModule({ code: shaderCode });
 
+const depthFormat = "depth24plus";
+
+function createDepthTexture() {
+    return device.createTexture({
+        size: [canvas.width, canvas.height],
+        format: depthFormat,
+        usage: GPUTextureUsage.RENDER_ATTACHMENT,
+    });
+}
+
+let depthTexture = createDepthTexture();
+
 
 const pipeline = device.createRenderPipeline({
     layout: "auto",
@@ -39,9 +57,9 @@ const pipeline = device.createRenderPipeline({
         entryPoint: "vsMain",
         buffers: [
             {
-                arrayStride: 8,
+                arrayStride: 12,
                 attributes: [
-                    { shaderLocation: 0, offset: 0, format: "float32x2" },
+                    { shaderLocation: 0, offset: 0, format: "float32x3" },
                 ],
             },
         ],
@@ -51,16 +69,44 @@ const pipeline = device.createRenderPipeline({
         entryPoint: "fsMain",
         targets: [{ format }],
     },
-    primative: {
+    primitive: {
         topology: "triangle-list",
+    },
+    depthStencil: {
+        format: depthFormat,
+        depthWriteEnabled: true,
+        depthCompare: "less",
     },
 });
 
+// MESS WITH THIS
 const vertexData = new Float32Array([
-    0.0, 0.5,
-    -0.5, -0.5,
-    0.5, -0.5,
+  -0.5, -0.5, -0.5,
+   0.5, -0.5, -0.5,
+   0.5,  0.5, -0.5,
+  -0.5,  0.5, -0.5,
+  -0.5, -0.5,  0.5,
+   0.5, -0.5,  0.5,
+   0.5,  0.5,  0.5,
+  -0.5,  0.5,  0.5, 
 ]);
+
+
+const indexData = new Uint16Array([
+    0, 1, 2, 0, 2, 3,
+    4, 6, 5, 4, 7, 6,
+    4, 5, 1, 4, 1, 0,
+    3, 2, 6, 3, 6, 7,
+    4, 0, 3, 4, 3, 7,
+    1, 5, 6, 1, 6, 2,
+]);
+
+const indexBuffer = device.createBuffer({
+    size: indexData.byteLength,
+    usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+});
+
+device.queue.writeBuffer(indexBuffer, 0, indexData);
 
 
 const vertexBuffer = device.createBuffer({
@@ -69,7 +115,45 @@ const vertexBuffer = device.createBuffer({
 });
 device.queue.writeBuffer(vertexBuffer, 0, vertexData);
 
+const uniformBuffer = device.createBuffer({
+    size: 64,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+});
+
+const bindGroup = device.createBindGroup({
+    layout: pipeline.getBindGroupLayout(0),
+    entries: [
+        { binding: 0, resource: { buffer: uniformBuffer } },
+    ],
+});
+
+function mat4Perspective(fov, aspect, near, far) {
+  const f = 1 / Math.tan(fov / 2);
+  return new Float32Array([
+    f/aspect, 0, 0, 0,
+    0, f, 0, 0,
+    0, 0, (far+near)/(near-far), -1,
+    0, 0, (2*far*near)/(near-far), 0,
+  ]);
+}
+
+
 function frame() {
+    const z = -2.0;
+    const t = performance.now() * 0.001;
+
+    const aspect = canvas.width / canvas.height;
+    const fov = 60 * Math.PI / 180;
+    const near = 0.1;
+    const far = 100.0;
+    const f = 1.0 / Math.tan(fov / 2);
+
+    const model = mat4Rotation(t);
+    const proj = mat4Perspective(fov, aspect, near, far);
+    const viewf = mat4Translation(z);
+    const mvp = mat4Mul(mat4Mul(proj, viewf), model);
+    device.queue.writeBuffer(uniformBuffer, 0, mvp);
+
     const texture = context.getCurrentTexture();
     const view = texture.createView();
 
@@ -84,11 +168,20 @@ function frame() {
                 storeOp: "store",
             },
         ],
+        depthStencilAttachment:
+            {
+            view: depthTexture.createView(),
+            depthClearValue: 1.0,
+            depthLoadOp: "clear",
+            depthStoreOp: "store",
+            },
     });
 
     pass.setPipeline(pipeline);
+    pass.setBindGroup(0, bindGroup);
     pass.setVertexBuffer(0, vertexBuffer);
-    pass.draw(3);
+    pass.setIndexBuffer(indexBuffer, "uint16");
+    pass.drawIndexed(36);
 
     pass.end();
 
@@ -100,3 +193,39 @@ function frame() {
 
 
 requestAnimationFrame(frame);
+
+
+function mat4Mul(a, b) {
+  const out = new Float32Array(16);
+  for (let c = 0; c < 4; c++) {
+    for (let r = 0; r < 4; r++) {
+      out[c*4 + r] =
+        a[0*4 + r] * b[c*4 + 0] +
+        a[1*4 + r] * b[c*4 + 1] +
+        a[2*4 + r] * b[c*4 + 2] +
+        a[3*4 + r] * b[c*4 + 3];
+    }
+  }
+  return out;
+}
+
+function mat4Translation(z) {
+  return new Float32Array([
+    1,0,0,0,
+    0,1,0,0,
+    0,0,1,0,
+    0,0,z,1,
+  ]);
+}
+
+
+// MESS WITH THIS
+function mat4Rotation(a) {
+  const c = Math.cos(a), s = Math.sin(a);
+  return new Float32Array([
+    c, 0, -s, 0,
+    0, 1, 0, 0,
+    s, 0, c, 0,
+    0, 0, 0, 1,
+  ]);
+}
