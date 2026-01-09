@@ -1,3 +1,5 @@
+
+
 // check if webgpu can be used and throw a tantrum if not
 if (!navigator.gpu) throw new Error("WebGPU not supported!");
 
@@ -13,6 +15,19 @@ const context = canvas.getContext("webgpu");
 // uhh its like what pixels twin
 const format = navigator.gpu.getPreferredCanvasFormat();
 context.configure({ device, format });
+
+// key shit
+
+const keys = {};
+
+document.addEventListener("keydown", (e) => {
+    keys[e.code] = true;
+});
+
+document.addEventListener("keyup", (e) => {
+    keys[e.code] = false;
+});
+
 
 
 // shaders
@@ -137,10 +152,23 @@ function mat4Perspective(fov, aspect, near, far) {
   ]);
 }
 
+let x = 0.0;
+let y = 0.0;
+let z = -2.0;
+let t = Math.PI;
 
 function frame() {
-    const z = -2.0;
-    const t = performance.now() * 0.001;
+
+    if (keys["KeyW"]) { z-=(0.01 * Math.cos(t)); x-=(0.01 * Math.sin(t)); }
+    if (keys["KeyS"]) { z+=(0.01 * Math.cos(t)); x+=(0.01 * Math.sin(t)); }
+    if (keys["KeyA"]) { z+=(0.01 * Math.sin(t)); x-=(0.01 * Math.cos(t)); }
+    if (keys["KeyD"]) { z-=(0.01 * Math.sin(t)); x+=(0.01 * Math.cos(t)); }
+    if(keys["ArrowLeft"]) t+=0.03;
+    if(keys["ArrowRight"]) t-=0.03;
+
+    console.log(x, y, z, t);
+
+    t = t % (Math.PI * 2);
 
     const aspect = canvas.width / canvas.height;
     const fov = 60 * Math.PI / 180;
@@ -148,11 +176,22 @@ function frame() {
     const far = 100.0;
     const f = 1.0 / Math.tan(fov / 2);
 
-    const model = mat4Rotation(t);
     const proj = mat4Perspective(fov, aspect, near, far);
-    const viewf = mat4Translation(z);
-    const mvp = mat4Mul(mat4Mul(proj, viewf), model);
+
+    // model transform (rotate cube or keep identity)
+    const modelMat = mat4Rotation(0); // or mat4Rotation(cubeSpin)
+
+    // camera view matrix = inverse camera transform
+    const viewMat = mat4Mul(
+        mat4Rotation(-t),
+        mat4Translation(-x, -y, -z)
+    );
+
+    const vp = mat4Mul(proj, viewMat);
+    const mvp = mat4Mul(vp, modelMat);
+
     device.queue.writeBuffer(uniformBuffer, 0, mvp);
+
 
     const texture = context.getCurrentTexture();
     const view = texture.createView();
@@ -209,12 +248,12 @@ function mat4Mul(a, b) {
   return out;
 }
 
-function mat4Translation(z) {
+function mat4Translation(x, y, z) {
   return new Float32Array([
     1,0,0,0,
     0,1,0,0,
     0,0,1,0,
-    0,0,z,1,
+    x,y,z,1,
   ]);
 }
 
