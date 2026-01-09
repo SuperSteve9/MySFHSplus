@@ -36,6 +36,6 @@ curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/s
 curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/spartancraft/travis.html" --output travis.html
 
 cd ..
-cd 
+cd ..
 
 curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/run.bat" --output run.bat
