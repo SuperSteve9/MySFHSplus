@@ -13,3 +13,6 @@ document.getElementById("SC").addEventListener("click", () => {
 document.getElementById("SCt").addEventListener("click", () => {
     window.location.href = "../spartancraft/travis.html";
 })
+document.getElementById("CL").addEventListener("click", () => {
+    window.location.href = "changelog.html";
+})

@@ -22,6 +22,7 @@ if not exist popup (
 )
 cd popup
 curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/popup/popup.html" --output popup.html
+curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/popup/changelog.html" --output changelog.html
 curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/popup/popup.js" --output popup.js
 
 cd ..
