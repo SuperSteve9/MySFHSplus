@@ -156,6 +156,7 @@ let x = 0.0;
 let y = 0.0;
 let z = -2.0;
 let t = Math.PI;
+let u = 0.0;
 
 function frame() {
 
@@ -165,10 +166,13 @@ function frame() {
     if (keys["KeyD"]) { z-=(0.01 * Math.sin(t)); x+=(0.01 * Math.cos(t)); }
     if(keys["ArrowLeft"]) t+=0.03;
     if(keys["ArrowRight"]) t-=0.03;
+    if(keys["ArrowUp"]) u+=0.03;
+    if(keys["ArrowDown"]) u-=0.03;
 
     console.log(x, y, z, t);
 
     t = t % (Math.PI * 2);
+    u = u % (Math.PI * 2);
 
     const aspect = canvas.width / canvas.height;
     const fov = 60 * Math.PI / 180;
@@ -178,14 +182,11 @@ function frame() {
 
     const proj = mat4Perspective(fov, aspect, near, far);
 
-    // model transform (rotate cube or keep identity)
-    const modelMat = mat4Rotation(0); // or mat4Rotation(cubeSpin)
+    const modelMat = mat4RotationY(0); 
 
-    // camera view matrix = inverse camera transform
-    const viewMat = mat4Mul(
-        mat4Rotation(-t),
-        mat4Translation(-x, -y, -z)
-    );
+    const rotMat = mat4Mul(mat4RotationX(-u), mat4RotationY(-t));
+
+    const viewMat = mat4Mul(rotMat,mat4Translation(-x, -y, -z));
 
     const vp = mat4Mul(proj, viewMat);
     const mvp = mat4Mul(vp, modelMat);
@@ -259,7 +260,7 @@ function mat4Translation(x, y, z) {
 
 
 // MESS WITH THIS
-function mat4Rotation(a) {
+function mat4RotationY(a) {
   const c = Math.cos(a), s = Math.sin(a);
   return new Float32Array([
     c, 0, -s, 0,
@@ -267,4 +268,14 @@ function mat4Rotation(a) {
     s, 0, c, 0,
     0, 0, 0, 1,
   ]);
+}
+
+function mat4RotationX(a) {
+    const c = Math.cos(a), s = Math.sin(a);
+    return new Float32Array([
+        1, 0, 0, 0,
+        0, c, s, 0,
+        0, -s, c, 0,
+        0, 0, 0, 1,
+    ]);
 }
