@@ -32,6 +32,8 @@ if not exist spartancraft (
 cd spartancraft
 curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/spartancraft/game.html" --output game.html
 curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/spartancraft/main.js" --output main.js
+curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/spartancraft/mod.js" --output mod.js
+curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/spartancraft/travis.html" --output travis.html
 
 cd ..
 
