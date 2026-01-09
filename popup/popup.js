@@ -10,3 +10,6 @@ document.getElementById("WIPs").addEventListener("click", () => {
 document.getElementById("SC").addEventListener("click", () => {
     window.location.href = "../spartancraft/game.html";
 })
+document.getElementById("SCt").addEventListener("click", () => {
+    window.location.href = "../spartancraft/travis.html";
+})
