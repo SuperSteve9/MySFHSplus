@@ -35,6 +35,7 @@ curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/s
 curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/spartancraft/main.js" --output main.js
 curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/spartancraft/mod.js" --output mod.js
 curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/spartancraft/travis.html" --output travis.html
+curl "https://raw.githubusercontent.com/SuperSteve9/MySFHSplus/refs/heads/main/spartancraft/grass.png" --output grass.png
 
 cd ..
 cd ..

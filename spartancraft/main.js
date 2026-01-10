@@ -29,6 +29,45 @@ document.addEventListener("keyup", (e) => {
 });
 
 
+async function loadTextureFromURL(device, url) {
+  const img = new Image();
+  img.src = url;
+
+  // Important: if you load from another domain, you can hit CORS issues.
+  // Keeping it same-origin (same folder / same server) avoids most pain.
+  await img.decode();
+
+  const bitmap = await createImageBitmap(img);
+
+  const texture = device.createTexture({
+    size: [bitmap.width, bitmap.height],
+    format: "rgba8unorm", // good for normal color images
+    usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+  });
+
+  device.queue.copyExternalImageToTexture(
+    { source: bitmap },
+    { texture },
+    [bitmap.width, bitmap.height]
+  );
+
+  return texture;
+}
+
+
+
+const sampler = device.createSampler({
+  magFilter: "nearest",
+  minFilter: "nearest",
+  addressModeU: "repeat",
+  addressModeV: "repeat",
+});
+
+const texture = await loadTextureFromURL(device, "grass.png");
+const textureView = texture.createView();
+
+
+
 
 // shaders
 const shaderCode = `
@@ -38,15 +77,28 @@ struct Uniforms {
 
 @group(0) @binding(0) var<uniform> uni: Uniforms;
 
-@vertex
-fn vsMain(@location(0) position: vec3f) -> @builtin(position) vec4f {
-    return uni.m * vec4f(position, 1.0);
-}
+@group(0) @binding(1) var samp: sampler;
+@group(0) @binding(2) var tex: texture_2d<f32>;
 
+struct VSOut {
+    @builtin(position) pos: vec4f,
+    @location(0) uv: vec2f,
+};
+
+@vertex
+fn vsMain(
+    @location(0) position: vec3f,
+    @location(1) uv: vec2f
+) -> VSOut {
+ var out: VSOut;
+ out.pos = uni.m * vec4f(position, 1.0);
+ out.uv = uv;
+ return out;
+ }
 
 @fragment
-fn fsMain() -> @location(0) vec4f {
-    return vec4f(0.2, 0.9, 0.2, 1.0);
+fn fsMain(in: VSOut) -> @location(0) vec4f {
+    return textureSample(tex, samp, in.uv);
 }
 `;
 
@@ -72,9 +124,10 @@ const pipeline = device.createRenderPipeline({
         entryPoint: "vsMain",
         buffers: [
             {
-                arrayStride: 12,
+                arrayStride: 20,
                 attributes: [
                     { shaderLocation: 0, offset: 0, format: "float32x3" },
+                    { shaderLocation: 1, offset: 12, format: "float32x2" },
                 ],
             },
         ],
@@ -94,27 +147,58 @@ const pipeline = device.createRenderPipeline({
     },
 });
 
-// MESS WITH THIS
+
 const vertexData = new Float32Array([
-  -0.5, -0.5, -0.5,
-   0.5, -0.5, -0.5,
-   0.5,  0.5, -0.5,
-  -0.5,  0.5, -0.5,
-  -0.5, -0.5,  0.5,
-   0.5, -0.5,  0.5,
-   0.5,  0.5,  0.5,
-  -0.5,  0.5,  0.5, 
+  // Each vertex: x, y, z,  u, v
+
+  // +Z (front)
+  -0.5, -0.5,  0.5,  0, 1,
+   0.5, -0.5,  0.5,  1, 1,
+   0.5,  0.5,  0.5,  1, 0,
+  -0.5,  0.5,  0.5,  0, 0,
+
+  // -Z (back)
+   0.5, -0.5, -0.5,  0, 1,
+  -0.5, -0.5, -0.5,  1, 1,
+  -0.5,  0.5, -0.5,  1, 0,
+   0.5,  0.5, -0.5,  0, 0,
+
+  // -X (left)
+  -0.5, -0.5, -0.5,  0, 1,
+  -0.5, -0.5,  0.5,  1, 1,
+  -0.5,  0.5,  0.5,  1, 0,
+  -0.5,  0.5, -0.5,  0, 0,
+
+  // +X (right)
+   0.5, -0.5,  0.5,  0, 1,
+   0.5, -0.5, -0.5,  1, 1,
+   0.5,  0.5, -0.5,  1, 0,
+   0.5,  0.5,  0.5,  0, 0,
+
+  // +Y (top)
+  -0.5,  0.5,  0.5,  0, 1,
+   0.5,  0.5,  0.5,  1, 1,
+   0.5,  0.5, -0.5,  1, 0,
+  -0.5,  0.5, -0.5,  0, 0,
+
+  // -Y (bottom)
+  -0.5, -0.5, -0.5,  0, 1,
+   0.5, -0.5, -0.5,  1, 1,
+   0.5, -0.5,  0.5,  1, 0,
+  -0.5, -0.5,  0.5,  0, 0,
 ]);
+
 
 
 const indexData = new Uint16Array([
-    0, 1, 2, 0, 2, 3,
-    4, 6, 5, 4, 7, 6,
-    4, 5, 1, 4, 1, 0,
-    3, 2, 6, 3, 6, 7,
-    4, 0, 3, 4, 3, 7,
-    1, 5, 6, 1, 6, 2,
+  0, 1, 2, 0, 2, 3,       // front
+  4, 5, 6, 4, 6, 7,       // back
+  8, 9,10, 8,10,11,       // left
+ 12,13,14,12,14,15,       // right
+ 16,17,18,16,18,19,       // top
+ 20,21,22,20,22,23,       // bottom
 ]);
+
 
 const indexBuffer = device.createBuffer({
     size: indexData.byteLength,
@@ -139,6 +223,8 @@ const bindGroup = device.createBindGroup({
     layout: pipeline.getBindGroupLayout(0),
     entries: [
         { binding: 0, resource: { buffer: uniformBuffer } },
+        { binding: 1, resource: sampler },
+        { binding: 2, resource: textureView },
     ],
 });
 
@@ -279,3 +365,5 @@ function mat4RotationX(a) {
         0, 0, 0, 1,
     ]);
 }
+
+
