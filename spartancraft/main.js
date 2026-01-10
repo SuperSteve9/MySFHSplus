@@ -239,7 +239,7 @@ function mat4Perspective(fov, aspect, near, far) {
 }
 
 let x = 0.0;
-let y = 0.0;
+let y = 1.5;
 let z = -2.0;
 let t = Math.PI;
 let u = 0.0;
@@ -254,11 +254,21 @@ function frame() {
     if(keys["ArrowRight"]) t-=0.03;
     if(keys["ArrowUp"]) u+=0.03;
     if(keys["ArrowDown"]) u-=0.03;
+    if(keys["ShiftLeft"]) y-=0.03;
+    if(keys["Space"]) y+=0.03;
 
-    console.log(x, y, z, t);
+    console.log(x, y, z, t, u);
 
     t = t % (Math.PI * 2);
     u = u % (Math.PI * 2);
+
+    if (u <= -Math.PI / 2) {
+        u = -Math.PI / 2;
+    }
+
+    if (u >= Math.PI / 2) {
+        u = Math.PI / 2;
+    }
 
     const aspect = canvas.width / canvas.height;
     const fov = 60 * Math.PI / 180;
