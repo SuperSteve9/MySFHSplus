@@ -214,19 +214,34 @@ const vertexBuffer = device.createBuffer({
 });
 device.queue.writeBuffer(vertexBuffer, 0, vertexData);
 
-const uniformBuffer = device.createBuffer({
-    size: 64,
-    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+const uniformBuffer1 = device.createBuffer({
+  size: 64,
+  usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 });
 
-const bindGroup = device.createBindGroup({
-    layout: pipeline.getBindGroupLayout(0),
-    entries: [
-        { binding: 0, resource: { buffer: uniformBuffer } },
-        { binding: 1, resource: sampler },
-        { binding: 2, resource: textureView },
-    ],
+const uniformBuffer2 = device.createBuffer({
+  size: 64,
+  usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 });
+
+const bindGroup1 = device.createBindGroup({
+  layout: pipeline.getBindGroupLayout(0),
+  entries: [
+    { binding: 0, resource: { buffer: uniformBuffer1 } },
+    { binding: 1, resource: sampler },
+    { binding: 2, resource: textureView },
+  ],
+});
+
+const bindGroup2 = device.createBindGroup({
+  layout: pipeline.getBindGroupLayout(0),
+  entries: [
+    { binding: 0, resource: { buffer: uniformBuffer2 } },
+    { binding: 1, resource: sampler },
+    { binding: 2, resource: textureView },
+  ],
+});
+
 
 function mat4Perspective(fov, aspect, near, far) {
   const f = 1 / Math.tan(fov / 2);
@@ -244,12 +259,14 @@ let z = -2.0;
 let t = Math.PI;
 let u = 0.0;
 
+let speed = 0.041;
+
 function frame() {
 
-    if (keys["KeyW"]) { z-=(0.01 * Math.cos(t)); x-=(0.01 * Math.sin(t)); }
-    if (keys["KeyS"]) { z+=(0.01 * Math.cos(t)); x+=(0.01 * Math.sin(t)); }
-    if (keys["KeyA"]) { z+=(0.01 * Math.sin(t)); x-=(0.01 * Math.cos(t)); }
-    if (keys["KeyD"]) { z-=(0.01 * Math.sin(t)); x+=(0.01 * Math.cos(t)); }
+    if (keys["KeyW"]) { z-=(speed * Math.cos(t)); x-=(speed * Math.sin(t)); }
+    if (keys["KeyS"]) { z+=(speed * Math.cos(t)); x+=(speed * Math.sin(t)); }
+    if (keys["KeyA"]) { z+=(speed * Math.sin(t)); x-=(speed * Math.cos(t)); }
+    if (keys["KeyD"]) { z-=(speed * Math.sin(t)); x+=(speed * Math.cos(t)); }
     if(keys["ArrowLeft"]) t+=0.03;
     if(keys["ArrowRight"]) t-=0.03;
     if(keys["ArrowUp"]) u+=0.03;
@@ -278,16 +295,19 @@ function frame() {
 
     const proj = mat4Perspective(fov, aspect, near, far);
 
-    const modelMat = mat4RotationY(0); 
+    const modelMat = mat4Translation(0,0,0);
+    const modelMat2 = mat4Translation(1,0,0);
 
     const rotMat = mat4Mul(mat4RotationX(-u), mat4RotationY(-t));
 
     const viewMat = mat4Mul(rotMat,mat4Translation(-x, -y, -z));
 
     const vp = mat4Mul(proj, viewMat);
-    const mvp = mat4Mul(vp, modelMat);
+    const mvp1 = mat4Mul(vp, modelMat);
+    const mvp2 = mat4Mul(vp, modelMat2);
 
-    device.queue.writeBuffer(uniformBuffer, 0, mvp);
+    device.queue.writeBuffer(uniformBuffer1, 0, mvp1);
+    device.queue.writeBuffer(uniformBuffer2, 0, mvp2);
 
 
     const texture = context.getCurrentTexture();
@@ -314,9 +334,12 @@ function frame() {
     });
 
     pass.setPipeline(pipeline);
-    pass.setBindGroup(0, bindGroup);
     pass.setVertexBuffer(0, vertexBuffer);
     pass.setIndexBuffer(indexBuffer, "uint16");
+    pass.setBindGroup(0, bindGroup1);
+    pass.drawIndexed(36);
+
+    pass.setBindGroup(0, bindGroup2);
     pass.drawIndexed(36);
 
     pass.end();
