@@ -117,14 +117,15 @@ function runOnDomChange() {
             if (!arraysEqual(grades, oldGrades)) {
                 for (i = 0; i < grades.length; i++) {
                     if (grades[i] != oldGrades[i]) {
-                        if (grades[i] >= oldGrades[i]) {
-                            gradeChanges += `<span style="color: green;">` + currentClassData[i].class + ": " +
-                                oldGrades[i].toFixed(2) + " ↑ " + grades[i].toFixed(2) + "\n";
-                        } else {
-                            gradeChanges += `<span style="color: red;">` + currentClassData[i].class + ": " +
-                                oldGrades[i].toFixed(2) + " ↓ " + grades[i].toFixed(2) + "\n";
+                        if (oldGrades[i] != null && grades[i] != null) {
+                            if (grades[i] >= oldGrades[i]) {
+                                gradeChanges += `<span style="color: green;">` + currentClassData[i].class + ": " +
+                                    oldGrades[i].toFixed(2) + " ↑ " + grades[i].toFixed(2) + "\n";
+                            } else {
+                                gradeChanges += `<span style="color: red;">` + currentClassData[i].class + ": " +
+                                    oldGrades[i].toFixed(2) + " ↓ " + grades[i].toFixed(2) + "\n";
+                            }
                         }
-
 
                     }
                 }
